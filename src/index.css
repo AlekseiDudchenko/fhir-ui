@@ -119,11 +119,6 @@ header h1 {
   cursor: pointer;
 }
 
-.form button[type='submit']:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
 .info-note {
   background: #eef2fb;
   border: 1px solid #c9d4ef;
@@ -154,33 +149,27 @@ header h1 {
   border: 1px solid #34a853;
 }
 
-.result-error {
-  background: #fdecea;
-  border: 1px solid #b3261e;
+.result-ok p {
+  margin: 0.5rem 0 0;
 }
 
-.outcome-table {
-  width: 100%;
-  margin-top: 0.75rem;
-  border-collapse: collapse;
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #3451b2;
+  text-decoration: underline;
+  cursor: pointer;
   font-size: 0.9rem;
 }
 
-.outcome-table th,
-.outcome-table td {
-  text-align: left;
-  padding: 0.4rem 0.6rem;
-  border-bottom: 1px solid #e5c5c2;
-  vertical-align: top;
-}
-
-.severity-error td:first-child,
-.severity-fatal td:first-child {
-  color: #b3261e;
-  font-weight: 600;
-}
-
-.severity-warning td:first-child {
-  color: #9a6700;
-  font-weight: 600;
+.json-preview {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #1a1a2e;
+  color: #e8eaf2;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  max-height: 320px;
 }

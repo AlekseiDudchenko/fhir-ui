@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createResource, type FhirServerSettings } from '../fhir/client';
 import { toFhirPatient } from '../fhir/mappers/patient';
-import type { CreateResult } from '../fhir/types';
 import { randomPatientFormData } from '../demoData';
-import { ResultPanel } from './ResultPanel';
+import { downloadResource, slugify } from '../download';
+import { DownloadPanel } from './DownloadPanel';
 
 const schema = z
   .object({
@@ -43,17 +42,15 @@ const schema = z
 
 type FormValues = z.infer<typeof schema>;
 
-interface Props {
-  settings: FhirServerSettings;
-}
-
-export function PatientForm({ settings }: Props) {
-  const [result, setResult] = useState<CreateResult | null>(null);
+export function PatientForm() {
+  const [downloaded, setDownloaded] = useState<{ resource: fhir4.Patient; filename: string } | null>(
+    null,
+  );
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -62,14 +59,16 @@ export function PatientForm({ settings }: Props) {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  function onSubmit(values: FormValues) {
     const patient = toFhirPatient({
       ...values,
       kvnr: values.kvnr || undefined,
       iknr: values.iknr || undefined,
       country: values.country || undefined,
     });
-    setResult(await createResource(settings, patient));
+    const filename = `patient-${slugify(values.pidValue)}.json`;
+    downloadResource(patient, filename);
+    setDownloaded({ resource: patient, filename });
   }
 
   return (
@@ -177,15 +176,13 @@ export function PatientForm({ settings }: Props) {
       </fieldset>
 
       <div className="button-row">
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending…' : 'Create Patient'}
-        </button>
+        <button type="submit">Download Patient JSON</button>
         <button type="button" className="secondary" onClick={() => reset(randomPatientFormData())}>
           Fill random data
         </button>
       </div>
 
-      <ResultPanel result={result} resourceType="Patient" />
+      {downloaded && <DownloadPanel resource={downloaded.resource} filename={downloaded.filename} />}
     </form>
   );
 }

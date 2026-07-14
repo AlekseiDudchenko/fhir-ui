@@ -27,7 +27,7 @@ export interface PatientFormData {
 }
 
 export interface ObservationFormData {
-  patientId: string; // logical id of an existing Patient
+  patientId: string; // Patient-ID referenced by this Observation
   status: 'registered' | 'preliminary' | 'final' | 'amended';
   loincCode: string;
   loincDisplay: string;
@@ -35,8 +35,3 @@ export interface ObservationFormData {
   unit: string; // UCUM code, e.g. "mmol/L"
   effectiveDateTime: string; // ISO 8601
 }
-
-/** Result of a create call against a FHIR server. */
-export type CreateResult =
-  | { ok: true; id: string; location?: string; resource?: fhir4.Resource }
-  | { ok: false; status: number; outcome?: fhir4.OperationOutcome; error?: string };

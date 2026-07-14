@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createResource, type FhirServerSettings } from '../fhir/client';
 import { toFhirObservation } from '../fhir/mappers/observation';
-import type { CreateResult } from '../fhir/types';
-import { ResultPanel } from './ResultPanel';
+import { downloadResource, slugify } from '../download';
+import { DownloadPanel } from './DownloadPanel';
 
 const schema = z.object({
-  patientId: z.string().min(1, 'Required — id of an existing Patient'),
+  patientId: z.string().min(1, 'Required — the Patient-ID used in the Patient JSON'),
   status: z.enum(['registered', 'preliminary', 'final', 'amended']),
   loincCode: z.string().regex(/^\d+-\d$/, 'LOINC code, e.g. 2339-0'),
   loincDisplay: z.string().min(1, 'Required'),
@@ -19,28 +18,29 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-interface Props {
-  settings: FhirServerSettings;
-}
-
-export function ObservationForm({ settings }: Props) {
-  const [result, setResult] = useState<CreateResult | null>(null);
+export function ObservationForm() {
+  const [downloaded, setDownloaded] = useState<{
+    resource: fhir4.Observation;
+    filename: string;
+  } | null>(null);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { status: 'final' },
   });
 
-  async function onSubmit(values: FormValues) {
+  function onSubmit(values: FormValues) {
     // datetime-local yields "2026-07-14T10:30" — make it a valid FHIR dateTime
     const observation = toFhirObservation({
       ...values,
       effectiveDateTime: new Date(values.effectiveDateTime).toISOString(),
     });
-    setResult(await createResource(settings, observation));
+    const filename = `observation-${slugify(values.loincCode)}-${slugify(values.patientId)}.json`;
+    downloadResource(observation, filename);
+    setDownloaded({ resource: observation, filename });
   }
 
   return (
@@ -49,7 +49,7 @@ export function ObservationForm({ settings }: Props) {
 
       <label>
         Patient id
-        <input {...register('patientId')} placeholder="id returned when creating the Patient" />
+        <input {...register('patientId')} placeholder="the Patient-ID from the downloaded Patient JSON" />
         {errors.patientId && <span className="error">{errors.patientId.message}</span>}
       </label>
 
@@ -97,11 +97,9 @@ export function ObservationForm({ settings }: Props) {
         {errors.effectiveDateTime && <span className="error">{errors.effectiveDateTime.message}</span>}
       </label>
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Sending…' : 'Create Observation'}
-      </button>
+      <button type="submit">Download Observation JSON</button>
 
-      <ResultPanel result={result} resourceType="Observation" />
+      {downloaded && <DownloadPanel resource={downloaded.resource} filename={downloaded.filename} />}
     </form>
   );
 }

@@ -1,11 +1,7 @@
 # fhir-ui
 
-Web UI for entering clinical data that is converted into **FHIR R4** resources
-and posted to any FHIR REST server (HAPI, [fhir-mii-pipeline](https://github.com/AlekseiDudchenko/fhir-mii-pipeline),
-public test servers, …).
-
-The server base URL is configurable in the app (Settings tab), so the UI is
-not tied to a specific backend.
+Web UI for entering clinical data that is converted into **FHIR R4**
+resources and downloaded as a JSON file — no server required.
 
 **Live demo:** https://alekseidudchenko.github.io/fhir-ui/ (deployed from
 `main` via GitHub Actions)
@@ -13,10 +9,7 @@ not tied to a specific backend.
 ## What it does
 
 ```
-form fields  →  pure mapper fn  →  FHIR R4 resource  →  POST {baseUrl}/{Type}
-                                                             │
-                              201 → show new resource id     │
-                              4xx/5xx → render OperationOutcome issues
+form fields  →  pure mapper fn  →  FHIR R4 resource  →  download as {type}-{id}.json
 ```
 
 - **Patient form** — produces a `Patient` conforming to the
@@ -27,15 +20,14 @@ form fields  →  pure mapper fn  →  FHIR R4 resource  →  POST {baseUrl}/{Ty
   birth date, address
 - **Observation form** — patient reference, LOINC code, value + UCUM unit,
   effective time → `Observation` (laboratory)
-- **Validation errors** returned by the server as `OperationOutcome`
-  (e.g. HAPI profile validation, HTTP 422) are rendered as a readable
-  issue table — severity, location, diagnostics.
+- Each form has a **Fill random data** helper and, after submit, a
+  **Download panel** with a JSON preview of the generated resource.
 
 ## Tech stack
 
 - React 18 + Vite + TypeScript
 - `@types/fhir` for typed FHIR R4 resources — resources are built by small
-  pure mapper functions (`src/fhir/mappers/`), no heavyweight FHIR client
+  pure mapper functions (`src/fhir/mappers/`)
 - react-hook-form + zod for client-side form validation
 - Vitest for unit tests
 
@@ -48,37 +40,34 @@ npm test           # run unit tests (mappers)
 npm run build      # type-check + production build
 ```
 
-## Point it at a server
+## Using the downloaded resources
 
-Open **Settings** in the app and set the FHIR base URL, e.g.
+The generated JSON files are standalone FHIR R4 resources. Post them to any
+FHIR server yourself, e.g.:
 
-| Server | Base URL |
-| ------ | -------- |
-| fhir-mii-pipeline (local) | `http://localhost:8080/fhir` |
-| HAPI public test server | `https://hapi.fhir.org/baseR4` |
+```bash
+curl -X POST http://localhost:8080/fhir/Patient \
+  -H 'Content-Type: application/fhir+json' \
+  -d @patient-pid-12345.json
+```
 
-The target server must allow CORS requests from the UI origin
-(for fhir-mii-pipeline: add the origin to `app.cors.allowed-origins`).
-
-Note: profile validation (e.g. MII Kerndatensatz) happens **on the server**.
-The UI only enforces basic structural rules and renders whatever
-`OperationOutcome` the server returns.
+Note: profile validation (e.g. MII Kerndatensatz) happens **on the FHIR
+server**, not in this UI — the UI only enforces basic structural rules
+client-side.
 
 ## Project structure
 
 ```
 src/
 ├── fhir/
-│   ├── client.ts           # thin fetch wrapper: create + OperationOutcome parsing
-│   ├── types.ts            # form-level models, CreateResult
-│   └── mappers/            # pure formData → FHIR resource functions (+ tests)
+│   ├── types.ts             # form-level models
+│   └── mappers/              # pure formData → FHIR resource functions (+ tests)
 ├── components/
 │   ├── PatientForm.tsx
 │   ├── ObservationForm.tsx
-│   ├── ResultPanel.tsx     # success / error display
-│   ├── OperationOutcomeView.tsx
-│   └── SettingsPanel.tsx
-├── settings.ts             # localStorage-backed server settings
-├── App.tsx                 # tab navigation
+│   └── DownloadPanel.tsx     # post-submit filename + JSON preview
+├── demoData.ts                # "Fill random data" generator
+├── download.ts                # browser download helper
+├── App.tsx                    # tab navigation
 └── main.tsx
 ```
