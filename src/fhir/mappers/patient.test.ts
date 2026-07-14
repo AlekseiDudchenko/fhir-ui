@@ -16,6 +16,9 @@ describe('toFhirPatient', () => {
     const patient = toFhirPatient(baseForm);
 
     expect(patient.resourceType).toBe('Patient');
+    expect(patient.meta?.profile).toEqual([
+      'https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient',
+    ]);
     expect(patient.name).toEqual([
       { use: 'official', family: 'Mustermann', given: ['Max'] },
     ]);

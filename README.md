@@ -18,9 +18,16 @@ form fields  →  pure mapper fn  →  FHIR R4 resource  →  download as {type}
   slice (KVNR + insurer IKNR as assigner), German administrative gender
   ("divers"/"unbestimmt" via the `gender-amtlich-de` extension), name,
   birth date, address
+- **Encounter form** — produces an `Encounter` conforming to the
+  [MII Core Data Set (Kerndatensatz), Fall module](https://github.com/medizininformatik-initiative/kerndatensatzmodul-fall)
+  ("KontaktGesundheitseinrichtung" profile): optional `identifier:Aufnahmenummer`
+  slice (type VN), status, class (`EncounterClassDE`), optional
+  `type:Kontaktebene` / `type:KontaktArt` slices, period, department
+  (DKG Fachabteilungsschlüssel) and admission source (DKG Aufnahmeanlass)
+  as free-text codes, treating institution
 - **Observation form** — patient reference, LOINC code, value + UCUM unit,
   effective time → `Observation` (laboratory)
-- Each form has a **Fill random data** helper and, after submit, a
+- Each form has a **Fill random data** helper (Patient) and, after submit, a
   **Download panel** with a JSON preview of the generated resource.
 
 ## Tech stack
@@ -51,6 +58,18 @@ curl -X POST http://localhost:8080/fhir/Patient \
   -d @patient-pid-12345.json
 ```
 
+## MII Kerndatensatz coverage
+
+The MII Core Data Set is split into several modules, each its own FHIR
+profile package. This UI currently covers:
+
+| Module | Resource | Status |
+| ------ | -------- | ------ |
+| Person | `Patient` | ✅ |
+| Fall | `Encounter` | ✅ |
+| Labor | `Observation` | partial (generic, not yet the official Laborbefund profile) |
+| Diagnose, Prozedur, Medikation, … | — | not yet implemented |
+
 Note: profile validation (e.g. MII Kerndatensatz) happens **on the FHIR
 server**, not in this UI — the UI only enforces basic structural rules
 client-side.
@@ -64,6 +83,7 @@ src/
 │   └── mappers/              # pure formData → FHIR resource functions (+ tests)
 ├── components/
 │   ├── PatientForm.tsx
+│   ├── EncounterForm.tsx
 │   ├── ObservationForm.tsx
 │   └── DownloadPanel.tsx     # post-submit filename + JSON preview
 ├── demoData.ts                # "Fill random data" generator

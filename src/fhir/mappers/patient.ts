@@ -9,6 +9,8 @@ const KVID_SYSTEM = 'http://fhir.de/sid/gkv/kvid-10';
 const IKNR_SYSTEM = 'http://fhir.de/sid/arge-ik/iknr';
 const GENDER_AMTLICH_EXT = 'http://fhir.de/StructureDefinition/gender-amtlich-de';
 const GENDER_AMTLICH_CS = 'http://fhir.de/CodeSystem/gender-amtlich-de';
+const MII_PATIENT_PROFILE =
+  'https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient';
 
 /**
  * Build a FHIR R4 Patient conforming to the MII Kerndatensatz Person profile.
@@ -43,6 +45,7 @@ export function toFhirPatient(form: PatientFormData): fhir4.Patient {
 
   const patient: fhir4.Patient = {
     resourceType: 'Patient',
+    meta: { profile: [MII_PATIENT_PROFILE] },
     identifier: identifiers,
     name: [
       {

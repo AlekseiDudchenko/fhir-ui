@@ -139,6 +139,16 @@ header h1 {
   font-weight: 400;
 }
 
+.hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #666;
+}
+
+.hint a {
+  color: #3451b2;
+}
+
 .result {
   border-radius: 8px;
   padding: 1rem;

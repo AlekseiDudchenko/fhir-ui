@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { PatientForm } from './components/PatientForm';
+import { EncounterForm } from './components/EncounterForm';
 import { ObservationForm } from './components/ObservationForm';
 
-type Tab = 'patient' | 'observation';
+type Tab = 'patient' | 'encounter' | 'observation';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('patient');
@@ -25,6 +26,14 @@ export default function App() {
         </button>
         <button
           role="tab"
+          aria-selected={tab === 'encounter'}
+          className={tab === 'encounter' ? 'active' : ''}
+          onClick={() => setTab('encounter')}
+        >
+          Encounter
+        </button>
+        <button
+          role="tab"
           aria-selected={tab === 'observation'}
           className={tab === 'observation' ? 'active' : ''}
           onClick={() => setTab('observation')}
@@ -34,6 +43,7 @@ export default function App() {
       </nav>
 
       {tab === 'patient' && <PatientForm />}
+      {tab === 'encounter' && <EncounterForm />}
       {tab === 'observation' && <ObservationForm />}
     </main>
   );
