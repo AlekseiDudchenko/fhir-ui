@@ -19,7 +19,12 @@ form fields  →  pure mapper fn  →  FHIR R4 resource  →  POST {baseUrl}/{Ty
                               4xx/5xx → render OperationOutcome issues
 ```
 
-- **Patient form** — identifier, name, gender, birth date, address → `Patient`
+- **Patient form** — produces a `Patient` conforming to the
+  [MII Core Data Set (Kerndatensatz), Person module](https://simplifier.net/medizininformatikinitiative-modulperson):
+  `identifier:pid` slice (type MR), optional `identifier:versichertenId_GKV`
+  slice (KVNR + insurer IKNR as assigner), German administrative gender
+  ("divers"/"unbestimmt" via the `gender-amtlich-de` extension), name,
+  birth date, address
 - **Observation form** — patient reference, LOINC code, value + UCUM unit,
   effective time → `Observation` (laboratory)
 - **Validation errors** returned by the server as `OperationOutcome`

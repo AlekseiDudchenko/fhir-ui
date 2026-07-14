@@ -1,21 +1,49 @@
 import type { PatientFormData } from '../types';
 
+// MII Kerndatensatz Person module, Patient profile:
+// https://simplifier.net/medizininformatikinitiative-modulperson
+// Identifier slice systems are fixed by the profile / de.basisprofil.r4.
+const V2_0203 = 'http://terminology.hl7.org/CodeSystem/v2-0203';
+const DE_IDENTIFIER_TYPE = 'http://fhir.de/CodeSystem/identifier-type-de-basis';
+const KVID_SYSTEM = 'http://fhir.de/sid/gkv/kvid-10';
+const IKNR_SYSTEM = 'http://fhir.de/sid/arge-ik/iknr';
+const GENDER_AMTLICH_EXT = 'http://fhir.de/StructureDefinition/gender-amtlich-de';
+const GENDER_AMTLICH_CS = 'http://fhir.de/CodeSystem/gender-amtlich-de';
+
 /**
- * Build a FHIR R4 Patient from flat form data.
+ * Build a FHIR R4 Patient conforming to the MII Kerndatensatz Person profile.
  *
- * Pure function: no I/O, no defaults invented beyond what FHIR requires
- * structurally. Optional address parts are only emitted when present so the
- * resulting JSON stays minimal.
+ * - `identifier:pid` slice — organization-internal Patient-ID, type MR
+ * - `identifier:versichertenId_GKV` slice — KVNR with the insurer's IKNR as
+ *   assigner (the profile requires assigner 1..1 inside this slice)
+ * - German administrative gender: "divers" (D) / "unbestimmt" (X) map to
+ *   FHIR `other` plus the gender-amtlich-de extension
+ *
+ * Pure function: no I/O; optional parts are only emitted when present.
  */
 export function toFhirPatient(form: PatientFormData): fhir4.Patient {
+  const identifiers: fhir4.Identifier[] = [
+    {
+      type: { coding: [{ system: V2_0203, code: 'MR' }] },
+      system: form.pidSystem,
+      value: form.pidValue,
+    },
+  ];
+
+  if (form.kvnr) {
+    identifiers.push({
+      type: { coding: [{ system: DE_IDENTIFIER_TYPE, code: 'GKV' }] },
+      system: KVID_SYSTEM,
+      value: form.kvnr,
+      assigner: {
+        identifier: { system: IKNR_SYSTEM, value: form.iknr },
+      },
+    });
+  }
+
   const patient: fhir4.Patient = {
     resourceType: 'Patient',
-    identifier: [
-      {
-        system: form.identifierSystem,
-        value: form.identifierValue,
-      },
-    ],
+    identifier: identifiers,
     name: [
       {
         use: 'official',
@@ -23,7 +51,7 @@ export function toFhirPatient(form: PatientFormData): fhir4.Patient {
         given: [form.givenName],
       },
     ],
-    gender: form.gender,
+    ...mapGender(form.gender),
     birthDate: form.birthDate,
   };
 
@@ -33,6 +61,26 @@ export function toFhirPatient(form: PatientFormData): fhir4.Patient {
   }
 
   return patient;
+}
+
+function mapGender(
+  gender: PatientFormData['gender'],
+): Pick<fhir4.Patient, 'gender' | '_gender'> {
+  if (gender !== 'divers' && gender !== 'unbestimmt') {
+    return { gender };
+  }
+  const code = gender === 'divers' ? 'D' : 'X';
+  return {
+    gender: 'other',
+    _gender: {
+      extension: [
+        {
+          url: GENDER_AMTLICH_EXT,
+          valueCoding: { system: GENDER_AMTLICH_CS, code, display: gender },
+        },
+      ],
+    },
+  };
 }
 
 function buildAddress(form: PatientFormData): fhir4.Address | undefined {

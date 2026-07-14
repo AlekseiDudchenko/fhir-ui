@@ -1,12 +1,24 @@
 // Form-level models: flat fields convenient for data entry.
 // Pure mapper functions in ./mappers convert these into FHIR R4 resources.
 
+/**
+ * Patient entry fields aligned with the MII Core Data Set (Kerndatensatz),
+ * Person module — see https://simplifier.net/medizininformatikinitiative-modulperson
+ *
+ * Administrative gender follows the German model: "divers" (D) and
+ * "unbestimmt" (X) map to FHIR `other` plus the gender-amtlich-de extension.
+ */
 export interface PatientFormData {
-  identifierSystem: string;
-  identifierValue: string;
+  /** Organization-internal Patient-ID (MII `identifier:pid` slice, type MR) */
+  pidSystem: string;
+  pidValue: string;
+  /** Statutory health insurance number, KVNR (MII `identifier:versichertenId_GKV` slice) */
+  kvnr?: string;
+  /** IKNR of the insurer — required by MII as the GKV identifier's assigner */
+  iknr?: string;
   familyName: string;
   givenName: string;
-  gender: 'male' | 'female' | 'other' | 'unknown';
+  gender: 'male' | 'female' | 'divers' | 'unbestimmt' | 'unknown';
   birthDate: string; // YYYY-MM-DD
   addressLine?: string;
   city?: string;

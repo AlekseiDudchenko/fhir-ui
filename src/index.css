@@ -110,6 +110,20 @@ header h1 {
   cursor: wait;
 }
 
+.info-note {
+  background: #eef2fb;
+  border: 1px solid #c9d4ef;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: #333;
+  margin: 0;
+}
+
+.info-note a {
+  color: #3451b2;
+}
+
 .error {
   color: #b3261e;
   font-size: 0.85rem;
