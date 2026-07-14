@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createResource, type FhirServerSettings } from '../fhir/client';
 import { toFhirPatient } from '../fhir/mappers/patient';
 import type { CreateResult } from '../fhir/types';
+import { randomPatientFormData } from '../demoData';
 import { ResultPanel } from './ResultPanel';
 
 const schema = z
@@ -51,6 +52,7 @@ export function PatientForm({ settings }: Props) {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -174,9 +176,14 @@ export function PatientForm({ settings }: Props) {
         </label>
       </fieldset>
 
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Sending…' : 'Create Patient'}
-      </button>
+      <div className="button-row">
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Sending…' : 'Create Patient'}
+        </button>
+        <button type="button" className="secondary" onClick={() => reset(randomPatientFormData())}>
+          Fill random data
+        </button>
+      </div>
 
       <ResultPanel result={result} resourceType="Patient" />
     </form>
