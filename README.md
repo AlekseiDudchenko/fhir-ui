@@ -7,6 +7,9 @@ public test servers, …).
 The server base URL is configurable in the app (Settings tab), so the UI is
 not tied to a specific backend.
 
+**Live demo:** https://alekseidudchenko.github.io/fhir-ui/ (deployed from
+`main` via GitHub Actions)
+
 ## What it does
 
 ```
